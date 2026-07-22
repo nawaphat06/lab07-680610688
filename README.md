@@ -6,7 +6,7 @@
 
 ชื่อ-สกุล : นวพรรษ พร้อมพงษ์
 
-Vercel URL :
+Vercel URL : https://lab07-680610688.vercel.app/
 
 ---
 
