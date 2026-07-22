@@ -11,6 +11,7 @@ import {
   zStudentPostBody,
   zStudentPutBody,
 } from "@libs/studentValidator.js";
+import type { success } from 'zod';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -25,28 +26,32 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 // GET /students
-// get students (by program)
-app.get("/students", (req: Request, res: Response) => {
+// get students (by program and ID)
+app.get("/api/students", (req: Request, res: Response) => {
   try {
     const program = req.query.program;
+    const studentId = req.query.studentId;
+
+    let filtered_students = students;
+
+    if (studentId) {
+      filtered_students = filtered_students.filter(
+        (student) => student.studentId === studentId
+      );
+    }
 
     if (program) {
-      let filtered_students = students.filter(
+      filtered_students = filtered_students.filter(
         (student) => student.program === program
       );
-      return res.json({
-        success: true,
-        data: filtered_students,
-      });
-    } else {
-      return res.json({
-        success: true,
-        count: students.length,
-        data: students,
-      });
     }
+
+    return res.status(200).json({
+      success: true,
+      students: filtered_students,
+    });
   } catch (err) {
-    return res.json({
+    return res.status(500).json({
       success: false,
       message: "Something is wrong, please try again",
       error: err,
@@ -56,7 +61,7 @@ app.get("/students", (req: Request, res: Response) => {
 
 // POST /students, body = {new student data}
 // add a new student
-app.post("/students", (req: Request, res: Response) => {
+app.post("/api/students", (req: Request, res: Response) => {
   try {
     const body = req.body as Student;
 
@@ -103,7 +108,7 @@ app.post("/students", (req: Request, res: Response) => {
 
 // PUT /students, body = {studentId}
 // Update specified student
-app.put("/students", (req: Request, res: Response) => {
+app.put("/api/students", (req: Request, res: Response) => {
   try {
     const body = req.body as Student;
 
@@ -149,13 +154,68 @@ app.put("/students", (req: Request, res: Response) => {
 });
 
 // DELETE /students, body = {studentId}
-app.delete("/students", (req: Request, res: Response) => {
-  res.json({
-    message: "Implement this!"
-  })
+app.delete("/api/students", (req: Request, res: Response) => {
+  try {
+    const body = req.body;
+
+    // Validate (เช็คว่า 9 หลักหรือมั่ย)
+    const val = zStudentDeleteBody.safeParse(body);
+    if (!val.success) {
+      return res.status(400).json({
+        success: false,
+        message: "Student Id must contain 9 characters"
+      });
+    }
+
+    const { studentId } = val.data;
+
+    //หา index ของนักศึกษาใน array
+    const index = students.findIndex(
+      (student) => student.studentId === studentId
+    );
+
+    // ถ้าไม่พบรหัสนักศึกษาในระบบ
+    if (index === -1) {
+      return res.status(404).json({
+        success: false,
+        message: "Student ID does not exist"
+      });
+    }
+
+    // ลบข้อมูลนักศึกษาออกจาก array
+    students.splice(index, 1);
+
+    return res.status(200).json({
+      success: true,
+      message: `Student Id ${studentId} has been deletedd`
+    });
+
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: "Something is wrong, please try again",
+      error: err,
+    });
+  }
 });
 
 // GET /api/me
+app.get("/api/me", (req: Request, res: Response) => {
+  try {
+    return res.status(200).json({
+      success: true,
+      fullName: "Nawapat Prompong",
+      studentId: "680610688"
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: "Something is wrong, please try again uiui eiei",
+      error: err,
+    });
+  }
+});
+
 
 app.listen(port, async () => {
   console.log(`🚀 Server running on http://localhost:${port}`);
