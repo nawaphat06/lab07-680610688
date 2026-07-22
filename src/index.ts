@@ -187,7 +187,7 @@ app.delete("/api/students", (req: Request, res: Response) => {
 
     return res.status(200).json({
       success: true,
-      message: `Student Id ${studentId} has been deletedd`
+      message: `Student Id ${studentId} has been deleted`
     });
 
   } catch (err) {
